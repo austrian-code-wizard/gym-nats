@@ -3,12 +3,12 @@ import base64
 from enum import Enum
 
 class Channels(Enum):
-    update: str = 'rl.update'
-    reward: str = 'rl.reward'
-    action: str = 'rl.action'
-    reset: str = 'rl.reset'
-    actions: str = 'rl.actions'
-    done: str = 'r.done'
+    UPDATE: str = 'rl.update'
+    REWARD: str = 'rl.reward'
+    ACTION: str = 'rl.action'
+    RESET: str = 'rl.reset'
+    ACTIONS: str = 'rl.actions'
+    DONE: str = 'r.done'
 
 def numpy_encode(array: np.ndarray) -> bytes:
     assert array.dtype == np.float64

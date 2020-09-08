@@ -1,48 +1,57 @@
-from gym import Env, spaces
+import base64
 import asyncio
 import numpy as np
-import base64
-from gym_nats.utils import Channels, numpy_decode, numpy_encode
+from gym import Env, spaces
 from nats.aio.client import Client as NATS
+from gym_nats.utils import Channels, numpy_decode, numpy_encode
 
 class NatsEnv(Env):
 
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, host="0.0.0.0", port="4222", user=None, password=None):
+    def __init__(self, host: str = "0.0.0.0", port: str = "4222", user: str = None, password: str = None):
         self.num_steps = 0
         self.nats = NATS()
         self.loop = asyncio.get_event_loop()
-        
-        connection_string = "nats://"
-        if user is not None and password is not None:
-            connection_string += f"{user}:{password}@"
-        self.loop.run_until_complete(self.nats.connect(connection_string))
 
-        raw_number_inputs = self.loop.run_until_complete(self.nats.request(Channels.update, None)).data
+        self.connect(host, port, user, password)
+
+        raw_number_inputs = self.request(Channels.UPDATE)
         raw_number_inputs = numpy_decode(raw_number_inputs)
         number_inputs = raw_number_inputs.shape[0] * raw_number_inputs.shape[1]
 
-        raw_number_actions = self.loop.run_until_complete(self.nats.request(Channels.actions, None)).data
+        raw_number_actions = self.request(Channels.ACTIONS)
         raw_number_actions = numpy_decode(raw_number_actions)
         number_actions = raw_number_actions.shape[0] * raw_number_actions.shape[1]
         
         self.observation_space = spaces.MultiBinary(number_inputs)
         self.action_space = spaces.Discrete(number_actions)
 
+    def request(self, channel: str, data: bytes = None):
+        return self.loop.run_until_complete(self.nats.request(channel, data)).data
+
+    def publish(self, channel: str, data: bytes = None):
+        self.loop.run_until_complete(self.nats.publish(channel, data))
+
+    def connect(self, host, port, user, password):
+        connection_string = "nats://"
+        if user is not None and password is not None:
+            connection_string += f"{user}:{password}@"
+        self.loop.run_until_complete(self.nats.connect(connection_string))
+
     def _get_reward(self):
-        reward_vector = numpy_decode(self.loop.run_until_complete(self.nats.request(Channels.reward, None)).data)
+        reward_vector = numpy_decode(self.request(Channels.REWARD))
         return reward_vector.sum()
 
     def _take_action(self, action):
         action_vector = np.array([action], dtype=np.float64)
-        self.loop.run_until_complete(self.nats.publish(Channels.action, numpy_encode(action_vector)))
+        self.publish(Channels.ACTION, numpy_encode(action_vector))
 
     def _next_observation(self):
-        return numpy_decode(self.loop.run_until_complete(self.nats.request(Channels.update, None)).data)
+        return numpy_decode(self.request(Channels.UPDATE))
 
     def _is_done(self):
-        response = self.loop.run_until_complete(self.nats.request(Channels.done, None)).data
+        response = self.request(Channels.DONE)
         return numpy_decode(response).sum() > 0
 
     def step(self, action):
@@ -53,7 +62,7 @@ class NatsEnv(Env):
         return self.cur_state, reward, done, {}
 
     def reset(self):
-        self.loop.run_until_complete(self.nats.request(Channels.reset, None))
+        self.publish(Channels.RESET)
         return self._next_observation()
 
     def render(self, mode='human'):
