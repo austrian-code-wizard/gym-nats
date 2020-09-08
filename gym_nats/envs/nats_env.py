@@ -27,16 +27,17 @@ class NatsEnv(Env):
         self.observation_space = spaces.MultiBinary(number_inputs)
         self.action_space = spaces.Discrete(number_actions)
 
-    def request(self, channel: str, data: bytes = None):
-        return self.loop.run_until_complete(self.nats.request(channel, data)).data
+    def request(self, channel: str, data: bytes = b''):
+        return self.loop.run_until_complete(self.nats.request(channel.value, data)).data
 
-    def publish(self, channel: str, data: bytes = None):
-        self.loop.run_until_complete(self.nats.publish(channel, data))
+    def publish(self, channel: str, data: bytes = b''):
+        self.loop.run_until_complete(self.nats.publish(channel.value, data))
 
     def connect(self, host, port, user, password):
         connection_string = "nats://"
         if user is not None and password is not None:
             connection_string += f"{user}:{password}@"
+        connection_string += f"{host}:{port}"
         self.loop.run_until_complete(self.nats.connect(connection_string))
 
     def _get_reward(self):
