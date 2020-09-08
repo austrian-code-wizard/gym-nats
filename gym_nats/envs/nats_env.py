@@ -18,11 +18,11 @@ class NatsEnv(Env):
 
         raw_number_inputs = self.request(Channels.UPDATE)
         raw_number_inputs = numpy_decode(raw_number_inputs)
-        number_inputs = raw_number_inputs.shape[0] * raw_number_inputs.shape[1]
+        number_inputs = raw_number_inputs.shape[0]
 
         raw_number_actions = self.request(Channels.ACTIONS)
         raw_number_actions = numpy_decode(raw_number_actions)
-        number_actions = raw_number_actions.shape[0] * raw_number_actions.shape[1]
+        number_actions = raw_number_actions.shape[0]
         
         self.observation_space = spaces.MultiBinary(number_inputs)
         self.action_space = spaces.Discrete(number_actions)
@@ -30,15 +30,12 @@ class NatsEnv(Env):
     def request(self, channel: str, data: bytes = b''):
         return self.loop.run_until_complete(self.nats.request(channel.value, data)).data
 
-    def publish(self, channel: str, data: bytes = b''):
-        self.loop.run_until_complete(self.nats.publish(channel.value, data))
-
     def connect(self, host, port, user, password):
         connection_string = "nats://"
         if user is not None and password is not None:
             connection_string += f"{user}:{password}@"
         connection_string += f"{host}:{port}"
-        self.loop.run_until_complete(self.nats.connect(connection_string))
+        self.loop.run_until_complete(self.nats.connect(connection_string, io_loop=self.loop))
 
     def _get_reward(self):
         reward_vector = numpy_decode(self.request(Channels.REWARD))
@@ -46,7 +43,7 @@ class NatsEnv(Env):
 
     def _take_action(self, action):
         action_vector = np.array([action], dtype=np.float64)
-        self.publish(Channels.ACTION, numpy_encode(action_vector))
+        self.request(Channels.ACTION, numpy_encode(action_vector))
 
     def _next_observation(self):
         return numpy_decode(self.request(Channels.UPDATE))
@@ -63,7 +60,7 @@ class NatsEnv(Env):
         return self.cur_state, reward, done, {}
 
     def reset(self):
-        self.publish(Channels.RESET)
+        self.request(Channels.RESET)
         return self._next_observation()
 
     def render(self, mode='human'):
