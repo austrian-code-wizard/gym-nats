@@ -3,7 +3,7 @@ python:
   - "3.8.5"
 
 before_install:
-  - sudo snap install -y nats
+  - sudo snap install nats
 
 install:
   - pip install -r requirements.txt
