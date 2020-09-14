@@ -1,0 +1,15 @@
+language: python
+python:
+  - "3.8.5"
+
+before_install:
+  - sudo snap install -y nats
+
+install:
+  - pip install -r requirements.txt
+  - pip install -e .
+
+before_script:
+  - nats-server -a 127.0.0.1
+
+script: pytest
