@@ -2,6 +2,8 @@ language: python
 python:
   - "3.8.5"
 
+cache: pip
+
 before_install:
   - sudo snap install nats
 
