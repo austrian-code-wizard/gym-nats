@@ -1,0 +1,5 @@
+asyncio-nats-client==0.10.0
+gym==0.17.2
+keras-rl2==1.0.4
+numpy==1.18.5
+pytest==6.0.2
