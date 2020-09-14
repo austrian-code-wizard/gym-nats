@@ -41,62 +41,24 @@ async def main(loop):
 
     np.random.seed(123)
 
-    shared_storage = {
-        "state_size": 17,
-        "current_state": np.zeros((17,), dtype=np.float64),
-        "current_index": 0,
-        "streak": 0
-    }
-    shared_storage["current_state"][shared_storage["current_index"]] = 1.0
-
     async def update_callback(msg):
         print(f"Sent update")
-        await nats.publish(msg.reply, numpy_encode(shared_storage["current_state"]))
+        await nats.publish(msg.reply, numpy_encode(np.array([1, 2, 3]).astype(np.float64)))
 
     async def reward_callback(msg):
-        reward = np.zeros((1,), dtype=np.float64)
-        #reward[0] = (e ** (-abs(8 - shared_storage["current_index"]))) * 10
-        if shared_storage["current_index"] == 8:
-            reward[0] = 100.0 + 10 * shared_storage["streak"]
-            shared_storage["streak"] += 1
-        else:
-            reward[0] = -50.0
-            shared_storage["streak"] = 0
-        print(f"Sent reward {reward[0]}")
-        await nats.publish(msg.reply, numpy_encode(reward))
+        await nats.publish(msg.reply, numpy_encode(np.array([10]).astype(np.float64)))
 
     async def action_callback(msg):
-        action = numpy_decode(msg.data)[0]
-        print(f"Taking action {action}")
-        if action == 1:
-            shared_storage["current_state"][shared_storage["current_index"]] = 0.0
-            shared_storage["current_state"][(shared_storage["current_index"] - 1) % shared_storage["state_size"]] = 1.0
-            shared_storage["current_index"] = (shared_storage["current_index"] - 1) % shared_storage["state_size"]
-        elif action == 2:
-            shared_storage["current_state"][shared_storage["current_index"]] = 0.0
-            shared_storage["current_state"][(shared_storage["current_index"] + 1) % shared_storage["state_size"]] = 1.0
-            shared_storage["current_index"] = (shared_storage["current_index"] + 1) % shared_storage["state_size"]
         await nats.publish(msg.reply, b'')
 
     async def reset_callback(msg):
-        print(f"Resetting simulation")
-        shared_storage["current_state"] = np.zeros((shared_storage["state_size"],), dtype=np.float64)
-        shared_storage["current_state"][0] = 1.0
-        shared_storage["current_index"] = 0
         await nats.publish(msg.reply, b'')
 
     async def actions_callback(msg):
-        print(f"Sent actions")
-        await nats.publish(msg.reply, numpy_encode(np.random.randint(0, 1, 3).astype(dtype=np.float64)))
+        await nats.publish(msg.reply, numpy_encode(np.random.randint(0, 1, 2).astype(dtype=np.float64)))
 
     async def done_callback(msg):
-        print(f"Sent done")
-        if shared_storage["streak"] >= 10:
-            done = np.ones((1, ), dtype=np.float)
-            shared_storage["streak"] = 0
-        else:
-            done = np.zeros((1, ), dtype=np.float)
-        await nats.publish(msg.reply, numpy_encode(done))
+        await nats.publish(msg.reply, numpy_encode(np.array([-1]).astype(np.float64)))
 
     def signal_handler():
         if nats.is_closed:

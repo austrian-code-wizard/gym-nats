@@ -2,6 +2,7 @@ import gym
 import gym_nats
 import argparse
 import numpy as np
+from time import sleep
 from rl.agents.dqn import DQNAgent
 from rl.memory import SequentialMemory
 from tensorflow.keras.models import Sequential
@@ -23,8 +24,8 @@ def main():
     ENV_NAME = 'gym_nats:nats-v0'
     # Get the environment and extract the number of actions.
     env = gym.make(ENV_NAME, host=args.host, port=args.port, user=args.user, password=args.password)
-    np.random.seed(123)
-    env.seed(123)
+    #np.random.seed(123)
+    #env.seed(123)
     nb_actions = env.action_space.n
 
     # Next, we build a very simple model.
@@ -41,18 +42,20 @@ def main():
     print(model.summary())
     # Finally, we configure and compile our agent. You can use every built-in tensorflow.keras optimizer and
     # even the metrics!
-    memory = SequentialMemory(limit=1000, window_length=1)
+    memory = SequentialMemory(limit=300, window_length=1)
     policy = EpsGreedyQPolicy()
     dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=5,
             target_model_update=1e-2, policy=policy)
     dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
-    dqn.fit(env, nb_steps=500, visualize=True, verbose=2)
+    dqn.fit(env, nb_steps=5000, visualize=True, verbose=2)
 
     #Save the weights and model
     dqn.save_weights(f"dqn_{ENV_NAME}_weights.h5f", overwrite=True)
     model.save(f"dqn_{ENV_NAME}_model")
-    dqn.test(env, nb_episodes=0, visualize=True)
+    print(f"Testing \n\n")
+    sleep(5)
+    dqn.test(env, nb_episodes=1, visualize=True)
 
 if __name__ == "__main__":
     main()

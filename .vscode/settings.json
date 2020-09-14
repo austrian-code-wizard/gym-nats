@@ -1,3 +1,16 @@
 {
-    "python.pythonPath": "/usr/local/Caskroom/miniconda/base/envs/gymNats/bin/python"
+    "python.pythonPath": "/usr/local/Caskroom/miniconda/base/envs/gymNats/bin/python",
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": true,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ]
 }

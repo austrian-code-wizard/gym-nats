@@ -13,6 +13,7 @@ class NatsEnv(Env):
         self.num_steps = 0
         self.nats = NATS()
         self.loop = asyncio.get_event_loop()
+        self.loop.set_exception_handler(None)
 
         self.connect(host, port, user, password)
 
@@ -35,7 +36,7 @@ class NatsEnv(Env):
         if user is not None and password is not None:
             connection_string += f"{user}:{password}@"
         connection_string += f"{host}:{port}"
-        self.loop.run_until_complete(self.nats.connect(connection_string, io_loop=self.loop))
+        self.loop.run_until_complete(self.nats.connect(connection_string, io_loop=self.loop, connect_timeout=1, max_reconnect_attempts=1, allow_reconnect=False))
 
     def _get_reward(self):
         reward_vector = numpy_decode(self.request(Channels.REWARD))
