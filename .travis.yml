@@ -12,6 +12,6 @@ install:
   - pip install -e .
 
 before_script:
-  - nats-server -a 127.0.0.1
+  - nats-server -a 127.0.0.1 &
 
 script: pytest
