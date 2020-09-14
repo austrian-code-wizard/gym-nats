@@ -1,0 +1,2 @@
+model_checkpoint_path: "dqn_gym_nats:nats-v0_weights.h5f"
+all_model_checkpoint_paths: "dqn_gym_nats:nats-v0_weights.h5f"
