@@ -5,13 +5,13 @@ python:
 cache: pip
 
 before_install:
-  - sudo snap install nats
+  - sudo snap install nats-server
 
 install:
   - pip install -r requirements.txt
   - pip install -e .
 
 before_script:
-  - nats -a 127.0.0.1
+  - nats-server -a 127.0.0.1
 
 script: pytest
