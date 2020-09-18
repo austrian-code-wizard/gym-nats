@@ -1,3 +1,5 @@
+
+from time import sleep
 import gym
 import subprocess
 import numpy as np
@@ -13,6 +15,8 @@ class Test(TestCase):
 
     def setUp(self):
         try:
+            subprocess.Popen('pkill nats-server', shell=True, stdout=subprocess.PIPE)
+            sleep(0.1)
             self.nats_process = subprocess.Popen(['nats-server -a 127.0.0.1'], shell=True, stdout = subprocess.PIPE)
         except:
             raise ValueError("Could not restart nats-server. Is nats-server installed on this system or is 127.0.0.1:4222 already in use?")
