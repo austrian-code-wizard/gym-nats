@@ -1,3 +1,5 @@
+
+from time import sleep
 import gym
 import subprocess
 import numpy as np
@@ -12,20 +14,25 @@ class Test(TestCase):
 
 
     def setUp(self):
-        """try:
-            result = subprocess.run(["pkill",  "nats-server"])
-            self.assertEqual(result.returncode, 0)
+        try:
+            subprocess.Popen('pkill nats-server', shell=True, stdout=subprocess.PIPE)
+            sleep(0.1)
+            self.nats_process = subprocess.Popen(['nats-server -a 127.0.0.1'], shell=True, stdout = subprocess.PIPE)
         except:
-            raise ValueError("Could not kill the running nats-server")
+            raise ValueError("Could not restart nats-server. Is nats-server installed on this system or is 127.0.0.1:4222 already in use?")
 
         try:
-            result = subprocess.run(["nats-server", "-a", "127.0.0.1 &"])
-            self.assertEqual(result.returncode, 0)
+            self.sim_process = subprocess.Popen(['python tests/simulation_test.py'], shell=True, stdout = subprocess.PIPE)
         except:
-            raise ValueError("Could not restart nats-server. Is nats-server installed on this system or is 127.0.0.1:4222 already in use?")"""
+            raise ValueError("Could not restart the test simulation. Does tests/simulation_test.py exist?")
+        sleep(0.5)
         self.env = gym.make('gym_nats:nats-v0', host="127.0.0.1")
         self.assertEqual(self.env.observation_space.n, 3)
         self.assertEqual(self.env.action_space.n, 2)
+
+    def tearDown(self):
+        self.nats_process.kill()
+        self.sim_process.kill()
 
     def test_step(self):
         ACTION = 1
