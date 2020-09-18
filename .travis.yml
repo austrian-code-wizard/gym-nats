@@ -11,8 +11,4 @@ install:
   - pip install -r requirements.txt
   - pip install -e .
 
-before_script:
-  - nats-server -a 127.0.0.1 &
-  - python tests/simulation_test.py &
-
 script: pytest
