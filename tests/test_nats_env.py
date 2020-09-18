@@ -25,7 +25,7 @@ class Test(TestCase):
             self.sim_process = subprocess.Popen(['python tests/simulation_test.py'], shell=True, stdout = subprocess.PIPE)
         except:
             raise ValueError("Could not restart the test simulation. Does tests/simulation_test.py exist?")
-
+        sleep(0.5)
         self.env = gym.make('gym_nats:nats-v0', host="127.0.0.1")
         self.assertEqual(self.env.observation_space.n, 3)
         self.assertEqual(self.env.action_space.n, 2)
