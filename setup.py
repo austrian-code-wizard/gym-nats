@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
   name = 'gym-nats',         
   packages = ['gym_nats'],   
-  version = '0.1',     
+  version = '0.1.1',     
   license='MIT',        
   description = 'Implements an OpenAI gym environment using NATS.io. Using this environment, a reinforcement learning agent can use the environment to learn from any source \
         of data since NATS.io can feed arbitrary data into the environment. For further information on the interface check out the README file.',
