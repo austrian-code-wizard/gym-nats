@@ -1,5 +1,6 @@
 import base64
 import asyncio
+from typing import Tuple, Dict
 import numpy as np
 from gym import Env, spaces
 from nats.aio.client import Client as NATS
@@ -17,9 +18,7 @@ class NatsEnv(Env):
 
         self.connect(host, port, user, password)
 
-        raw_number_inputs = self.request(Channels.UPDATE)
-        raw_number_inputs = numpy_decode(raw_number_inputs)
-        number_inputs = raw_number_inputs.shape[0]
+        number_inputs = self._next_observation().shape[0]
 
         raw_number_actions = self.request(Channels.ACTIONS)
         raw_number_actions = numpy_decode(raw_number_actions)
@@ -28,43 +27,43 @@ class NatsEnv(Env):
         self.observation_space = spaces.MultiBinary(number_inputs)
         self.action_space = spaces.Discrete(number_actions)
 
-    def request(self, channel: str, data: bytes = b''):
+    def request(self, channel: str, data: bytes = b'') -> bytes:
         return self.loop.run_until_complete(self.nats.request(channel.value, data)).data
 
-    def connect(self, host, port, user, password):
+    def connect(self, host: str, port: str, user: str, password: str):
         connection_string = "nats://"
         if user is not None and password is not None:
             connection_string += f"{user}:{password}@"
         connection_string += f"{host}:{port}"
         self.loop.run_until_complete(self.nats.connect(connection_string, io_loop=self.loop, connect_timeout=1, max_reconnect_attempts=1, allow_reconnect=False))
 
-    def _get_reward(self):
+    def _get_reward(self) -> int:
         reward_vector = numpy_decode(self.request(Channels.REWARD))
         return reward_vector.sum()
 
-    def _take_action(self, action):
+    def _take_action(self, action: int):
         action_vector = np.array([action], dtype=np.float64)
         self.request(Channels.ACTION, numpy_encode(action_vector))
 
-    def _next_observation(self):
+    def _next_observation(self) -> np.array:
         return numpy_decode(self.request(Channels.UPDATE))
 
-    def _is_done(self):
+    def _is_done(self) -> bool:
         response = self.request(Channels.DONE)
         return numpy_decode(response).sum() > 0
 
-    def step(self, action):
+    def step(self, action: int) -> Tuple[np.array, int, bool, Dict]:
         self._take_action(action)
         reward = self._get_reward()
         self.cur_state = self._next_observation()
         done = self._is_done()
         return self.cur_state, reward, done, {}
 
-    def reset(self):
+    def reset(self) -> np.array:
         self.request(Channels.RESET)
         return self._next_observation()
 
-    def render(self, mode='human'):
+    def render(self, mode: str = 'human'):
         if mode != 'human':
             raise ValueError("Invalid rendering mode")
         print(f"Current state: {self.cur_state}")
