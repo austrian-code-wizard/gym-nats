@@ -121,4 +121,5 @@ Pull requests are the best way to propose changes to the codebase (we use [Githu
 2. If you've added code that should be tested, add tests.
 3. If you've changed APIs, update the docstrings and README.
 4. Ensure the unittests pass.
-5. Issue that pull request!
+5. Bump the version in setup.py.
+6. Issue that pull request!
